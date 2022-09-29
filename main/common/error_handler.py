@@ -34,3 +34,20 @@ def register_error_handler():
             ),
             500,
         )
+
+    @app.errorhandler(405)
+    def handle_method_not_allow(e):
+        return make_response(
+            jsonify({
+                "error_message": str(e)
+            }),
+            405,
+        )
+
+    @app.errorhandler(404)
+    def handle_not_found(e):
+        return make_response(
+            jsonify({
+                "error_message": "NOT FOUND: {}".format(str(e))
+            }), 404
+        )
