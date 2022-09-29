@@ -11,7 +11,7 @@ from .exceptions import RecordNotFoundError, UnauthorizedError, SchemaValidation
 
 
 # validate request input with schema
-def validate_input(schema, partial: tuple | bool = False):
+def validate_input(schema, partial: tuple[str] | bool = False):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

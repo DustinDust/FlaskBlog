@@ -1,17 +1,27 @@
-from flask import request
+from flask import jsonify
 
 from main import app, db
 from main.common.decorators import check_post_exist, jwt_guard, validate_input
 from main.common.exceptions import RecordNotFoundError, ForbiddenAccessError
 from main.models.post import Post
 from main.models.tag import Tag
+from main.schemas.base import PageSchema
 from main.schemas.post import PostSchema
 
 
 @app.get("/post")
-def get_all_post(*args, **kwargs):
-    form_data = request.form
-    return PostSchema().jsonify(Post.query.all(), many=True)
+@validate_input(PageSchema)
+def get_all_post(page, **kwargs):
+    page = Post.query.paginate(page=page, per_page=app.config["PER_PAGE"])
+    posts = PostSchema().dump(page.items, many=True)
+    total_count = page.total
+    page_num = page.page
+    return jsonify({
+        "items": posts,
+        "total_items": total_count,
+        "page": page_num,
+        "items_per_page": app.config["PER_PAGE"]
+    })
 
 
 @app.get("/post/<int:post_id>")
@@ -77,7 +87,8 @@ def update_post(user_id, post: Post, body=None, tags=None, **kwargs):
 @check_post_exist
 def delete_post(user_id, post, **kwargs):
     if post.user_id != user_id:
-        raise ForbiddenAccessError(error_data={"post_id": post.id, "user_id": user_id})
+        raise ForbiddenAccessError(
+            error_data={"post_id": post.id, "user_id": user_id})
     db.session.delete(post)
     db.session.commit()
 

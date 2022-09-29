@@ -29,9 +29,18 @@ def sign_in(username, password, **kwargs):
 @app.post("/user/sign-up")
 @validate_input(UserSchema)
 def sign_up(username, email, password, **kwargs):
-    existing_user = User.query.filter_by(username=username).one_or_none()
-    if existing_user is not None:
-        raise RecordExistedError()
+    existing_user_name = User.query.filter_by(username=username).one_or_none()
+    if existing_user_name is not None:
+        raise RecordExistedError(
+            error_message="Username {} has already been used".format(username)
+        )
+    existing_user_email = User.query.filter_by(email=email).one_or_none()
+    if existing_user_email is not None:
+        raise RecordExistedError(
+            error_message="Email {} is already attached to another account".format(
+                email
+            )
+        )
 
     new_user = User()
     new_user.username = username

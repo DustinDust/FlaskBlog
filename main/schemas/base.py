@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, EXCLUDE
+from marshmallow import Schema, fields, EXCLUDE, validate
 from flask import jsonify
 
 
@@ -14,3 +14,7 @@ class PaginationSchema(BaseSchema):
     items_per_page = fields.Integer()
     page = fields.Integer()
     total_items = fields.Integer()
+
+
+class PageSchema(BaseSchema):
+    page = fields.Integer(required=True, validate=validate.Range(min=0))

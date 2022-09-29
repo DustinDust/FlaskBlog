@@ -1,17 +1,28 @@
-from flask import request
+from flask import jsonify
 
 from main import app, db
 from main.common.decorators import check_tag_exist, jwt_guard, validate_input
 from main.common.exceptions import RecordExistedError
 from main.models.tag import Tag
 from main.schemas.tag import TagSchema
+from main.schemas.base import PageSchema, PaginationSchema
 
 
 @app.get("/tag")
-def get_tags():
-    form = request.form
-    tags = Tag.query.all()
-    return TagSchema().jsonify(tags, many=True)
+@validate_input(PageSchema)
+def get_tags(page, **kwargs):
+    page = Tag.query.paginate(page=page, per_page=app.config["PER_PAGE"])
+    tags = TagSchema().dump(page.items, many=True)
+    page_num = page.page
+    total_count = page.total
+    return jsonify(
+        {
+            "items": tags,
+            "total_items": total_count,
+            "item_per_page": app.config["PER_PAGE"],
+            "page": page_num,
+        }
+    )
 
 
 @app.get("/tag/<int:tag_id>")
@@ -26,10 +37,9 @@ def get_one_tag(tag, **kwargs):
 def create_tag(user_id, name, **kwargs):
     exist_tag = Tag.query.filter_by(name=name).one_or_none()
     if exist_tag is not None:
-        raise RecordExistedError(error_data={
-            "exist_name": exist_tag.name,
-            "new_name": name
-        })
+        raise RecordExistedError(
+            error_data={"exist_name": exist_tag.name, "new_name": name}
+        )
     tag = Tag(name=name)
     db.session.add(tag)
     db.session.commit()
@@ -43,10 +53,9 @@ def create_tag(user_id, name, **kwargs):
 def update_tag(user_id, name, tag, **kwargs):
     exist_tag = Tag.query.filter_by(name=name).one_or_none()
     if exist_tag is not None:
-        raise RecordExistedError(error_data={
-            "exist_name": exist_tag.name,
-            "new_name": name
-        })
+        raise RecordExistedError(
+            error_data={"exist_name": exist_tag.name, "new_name": name}
+        )
 
     tag.name = name
     db.session.commit()
